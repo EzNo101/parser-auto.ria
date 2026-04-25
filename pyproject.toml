@@ -1,0 +1,12 @@
+[project]
+name = "parser-auto-ria"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bs4>=0.0.2",
+    "fake-useragent>=2.2.0",
+    "fastapi>=0.136.1",
+    "httpx>=0.28.1",
+]
