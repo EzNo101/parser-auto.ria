@@ -103,8 +103,11 @@ class CarPageParse:
             for key, value in obj.items():  # pyright: ignore[reportUnknownVariableType]
                 key_text = str(key)  # pyright: ignore[reportUnknownArgumentType]
 
-                if isinstance(value, str) and "phone" in key_text.lower():
-                    if re.search(r"\d{7,}", value):
+                if isinstance(value, str):
+                    if value.startswith("tel:"):
+                        return value.replace("tel:", "").strip()
+
+                    if "phone" in key_text.lower() and re.search(r"\d{7,}", value):
                         return value
 
                 result = self._find_phone(value)
@@ -177,6 +180,30 @@ class CarPageParse:
 
         return self._find_phone(json_data)
 
+    def _extract_title(self, soup: BeautifulSoup) -> str | None:
+        if soup.title:
+            title = soup.title.get_text(strip=True)
+
+            title = title.replace("AUTO.RIA – Продам ", "")
+
+            if "," in title:
+                title = title.split(",")[0]
+
+            return title.strip()
+
+        return None
+
+    def _normalize_phone(self, phone: str) -> str:
+        digits = re.sub(r"[^\d]", "", phone)
+
+        if digits.startswith("0") and len(digits) >= 10:
+            return "+380" + digits[1:]
+
+        if digits.startswith("380"):
+            return "+" + digits
+
+        return "+" + digits
+
     async def parse(self, url: str, client: httpx.AsyncClient) -> dict[str, Any] | None:
         response = await client.get(url)
 
@@ -184,10 +211,19 @@ class CarPageParse:
             return None
 
         html = response.text
+        soup = self._get_soup(html)
 
-        phone = await self._fetch_phone(html, url, client)
+        final_url = str(response.url)
+        auto_id = self._extract_auto_id(final_url) or self._extract_auto_id(url)
+
+        if not auto_id:
+            return None
+
+        phone = await self._fetch_phone(html, final_url, client)
 
         return {
-            "url": url,
-            "phone": phone,
+            "auto_id": auto_id,
+            "url": final_url,
+            "title": self._extract_title(soup),
+            "phone_number": self._normalize_phone(phone) if phone else None,
         }
