@@ -9,4 +9,7 @@ dependencies = [
     "fake-useragent>=2.2.0",
     "fastapi>=0.136.1",
     "httpx>=0.28.1",
+    "pydantic-settings>=2.14.0",
+    "redis>=7.4.0",
+    "sqlalchemy>=2.0.49",
 ]

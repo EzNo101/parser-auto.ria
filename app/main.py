@@ -1,6 +1,5 @@
-def main():
-    print("Hello from parser-auto-ria!")
+from fastapi import FastAPI
 
+from app.core.lifespan import lifespan
 
-if __name__ == "__main__":
-    main()
+app = FastAPI(lifespan=lifespan)
