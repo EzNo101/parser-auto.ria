@@ -2,7 +2,7 @@ class AppError(Exception):
     pass
 
 
-class AdvertNotFoundErorr(AppError):
+class AdvertNotFoundError(AppError):
     pass
 
 
