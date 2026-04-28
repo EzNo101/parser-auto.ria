@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypedDict
 import re
 import json
 import httpx
@@ -6,13 +6,20 @@ from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 
 
+class Advert(TypedDict):
+    auto_id: str
+    url: str
+    title: str
+    phone_number: str
+
+
 class CarPageParse:
     def _get_soup(self, html: str) -> BeautifulSoup:
         return BeautifulSoup(html, "html.parser")
 
-    def _extract_auto_id(self, url: str) -> str | None:
+    def _extract_auto_id(self, url: str) -> str:
         match = re.search(r"/auto_[^/]+_(\d+)\.html", url)
-        return match.group(1) if match else None  # only id
+        return match.group(1) if match else ""  # only id
 
     def _extract_action_data(self, html_text: str) -> dict[str, Any] | None:
         """
@@ -180,7 +187,7 @@ class CarPageParse:
 
         return self._find_phone(json_data)
 
-    def _extract_title(self, soup: BeautifulSoup) -> str | None:
+    def _extract_title(self, soup: BeautifulSoup) -> str:
         if soup.title:
             title = soup.title.get_text(strip=True)
 
@@ -190,8 +197,7 @@ class CarPageParse:
                 title = title.split(",")[0]
 
             return title.strip()
-
-        return None
+        return ""
 
     def _normalize_phone(self, phone: str) -> str:
         digits = re.sub(r"[^\d]", "", phone)
@@ -204,7 +210,7 @@ class CarPageParse:
 
         return "+" + digits
 
-    async def parse(self, url: str, client: httpx.AsyncClient) -> dict[str, Any] | None:
+    async def parse_car(self, url: str, client: httpx.AsyncClient) -> Advert | None:
         response = await client.get(url)
 
         if response.status_code != 200:
@@ -221,9 +227,16 @@ class CarPageParse:
 
         phone = await self._fetch_phone(html, final_url, client)
 
-        return {
-            "auto_id": auto_id,
-            "url": final_url,
-            "title": self._extract_title(soup),
-            "phone_number": self._normalize_phone(phone) if phone else None,
-        }
+        return Advert(
+            auto_id=auto_id,
+            url=url,
+            title=self._extract_title(soup),
+            phone_number=self._normalize_phone(phone) if phone else "",
+        )
+
+        # return {
+        #     "auto_id": auto_id,
+        #     "url": final_url,
+        #     "title": self._extract_title(soup),
+        #     "phone_number": self._normalize_phone(phone) if phone else None,
+        # }

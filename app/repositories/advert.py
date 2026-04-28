@@ -8,13 +8,23 @@ class AdvertRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_all(self) -> list[Advert]:
+        result = await self.session.execute(select(Advert))
+        return list(result.scalars().all())
+
     async def get_by_id(self, ad_id: int) -> Advert | None:
         result = await self.session.execute(select(Advert).where(Advert.id == ad_id))
         return result.scalar_one_or_none()
 
-    async def get_by_auto_id(self, auto_id: int) -> Advert | None:
+    async def get_by_auto_id(self, auto_id: str) -> Advert | None:
         result = await self.session.execute(
             select(Advert).where(Advert.auto_id == auto_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_phone_number(self, phone_number: str) -> Advert | None:
+        result = await self.session.execute(
+            select(Advert).where(Advert.phone_number == phone_number)
         )
         return result.scalar_one_or_none()
 

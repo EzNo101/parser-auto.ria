@@ -39,7 +39,7 @@ class SearchPageParser:
 
         return urlunparse(parts)
 
-    async def parse(
+    async def parse_adverts(
         self,
         start_url: str,
         client: httpx.AsyncClient,
