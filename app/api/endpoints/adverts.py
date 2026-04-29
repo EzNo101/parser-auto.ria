@@ -1,25 +1,29 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from app.services.parse import ParseService
 from app.core.error import AdvertNotFoundError
 from app.core.dependencies import get_parse_service
-from app.models.advert import Advert
+from app.schemas.adverts import AdvertResponse
 
 
 router = APIRouter(prefix="/adverts", tags=["adverts"])
 
 
-@router.get("/all", status_code=status.HTTP_200_OK, response_model=list[Advert])
-async def get_all_advert(parse_service: ParseService = get_parse_service()):
+@router.get("/all", status_code=status.HTTP_200_OK, response_model=list[AdvertResponse])
+async def get_all_advert(parse_service: ParseService = Depends(get_parse_service)):
     try:
         return await parse_service.get_all()
     except AdvertNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@router.get("/id/{advert_id}", status_code=status.HTTP_200_OK, response_model=Advert)
+@router.get(
+    "/id/{advert_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=AdvertResponse,
+)
 async def get_advert_by_id(
-    advert_id: int, parse_service: ParseService = get_parse_service()
+    advert_id: int, parse_service: ParseService = Depends(get_parse_service)
 ):
     try:
         return await parse_service.get_by_id(advert_id)
@@ -27,9 +31,13 @@ async def get_advert_by_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@router.get("/auto_id/{auto_id}", status_code=status.HTTP_200_OK, response_model=Advert)
+@router.get(
+    "/auto_id/{auto_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=AdvertResponse,
+)
 async def get_advert_by_auto_id(
-    auto_id: str, parse_service: ParseService = get_parse_service()
+    auto_id: str, parse_service: ParseService = Depends(get_parse_service)
 ):
     try:
         return await parse_service.get_by_auto_id(auto_id)
@@ -38,10 +46,12 @@ async def get_advert_by_auto_id(
 
 
 @router.get(
-    "/phone/{phone_number}", status_code=status.HTTP_200_OK, response_model=Advert
+    "/phone/{phone_number}",
+    status_code=status.HTTP_200_OK,
+    response_model=AdvertResponse,
 )
 async def get_advert_by_phone_number(
-    phone_number: str, parse_service: ParseService = get_parse_service()
+    phone_number: str, parse_service: ParseService = Depends(get_parse_service)
 ):
     try:
         return await parse_service.get_by_number(phone_number)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from app.services.parse import ParseService
 from app.core.dependencies import get_parse_service
@@ -10,7 +10,9 @@ router = APIRouter(prefix="/parse", tags=["parse"])
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=list[AdvertDict])
 async def parse_adverts(
-    url: str, max_pages: int = 1, parse_service: ParseService = get_parse_service()
+    url: str,
+    max_pages: int = 1,
+    parse_service: ParseService = Depends(get_parse_service),
 ):
     try:
         return await parse_service.parse(url, max_pages=max_pages)
