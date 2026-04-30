@@ -1,8 +1,12 @@
+from ast import parse
+from email.headerregistry import ContentDispositionHeader
+
 from fastapi import APIRouter, status, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 
 from app.services.parse import ParseService
 from app.core.dependencies import get_parse_service
-from app.core.error import NoParsedAdverts
+from app.core.error import NoParsedAdverts, AdvertNotFoundError
 from app.scraper.car_page import Advert as AdvertDict
 
 router = APIRouter(prefix="/parse", tags=["parse"])
@@ -18,3 +22,26 @@ async def parse_adverts(
         return await parse_service.parse(url, max_pages=max_pages)
     except NoParsedAdverts as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/get_vcf_file", status_code=status.HTTP_200_OK)
+async def export_to_vcf(parse_service: ParseService = Depends(get_parse_service)):
+
+    async def create_vcf():
+        adverts = await parse_service.get_all()
+        if not adverts:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Adverts not found"
+            )
+
+        for advert in adverts:
+            yield parse_service.build_vcard(
+                advert.title,
+                advert.phone_number,
+            )
+
+    return StreamingResponse(
+        create_vcf(),
+        media_type="text/vcard",
+        headers={"Content-Disposition": "attachment; filename=adverts.vcf"},
+    )

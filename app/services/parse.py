@@ -85,3 +85,16 @@ class ParseService:
         adverts = await self.repo.get_all()
         for advert in adverts:
             await self.repo.delete_advert(advert)
+
+    def build_vcard(self, title: str, phone_number: str) -> str:
+        title = title.replace("\n", " ").strip()
+        phone_number = phone_number.strip()
+
+        return (
+            "BEGIN:VCARD\n"
+            "VERSION:3.0\n"
+            f"N:;{title};;;\n"
+            f"FN:{title}\n"
+            f"TEL;TYPE=CELL:{phone_number}\n"
+            "END:VCARD\n"
+        )
