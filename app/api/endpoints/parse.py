@@ -1,6 +1,3 @@
-from ast import parse
-from email.headerregistry import ContentDispositionHeader
-
 from fastapi import APIRouter, status, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 
@@ -24,24 +21,44 @@ async def parse_adverts(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
-@router.post("/get_vcf_file", status_code=status.HTTP_200_OK)
+@router.get("/get_vcf_file", status_code=status.HTTP_200_OK)
 async def export_to_vcf(parse_service: ParseService = Depends(get_parse_service)):
 
     async def create_vcf():
-        adverts = await parse_service.get_all()
-        if not adverts:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Adverts not found"
-            )
-
-        for advert in adverts:
-            yield parse_service.build_vcard(
-                advert.title,
-                advert.phone_number,
-            )
+        try:
+            async for advert in await parse_service.stream_all():
+                yield parse_service.build_vcard(
+                    advert.title,
+                    advert.phone_number,
+                    advert.url,
+                )
+        except AdvertNotFoundError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
     return StreamingResponse(
         create_vcf(),
         media_type="text/vcard",
         headers={"Content-Disposition": "attachment; filename=adverts.vcf"},
+    )
+
+
+@router.get("/get_csv_file", status_code=status.HTTP_200_OK)
+async def export_to_csv(parse_service: ParseService = Depends(get_parse_service)):
+
+    async def create_csv():
+        yield "title,phone_number,url\n"
+        try:
+            async for advert in await parse_service.stream_all():
+                yield parse_service.build_csv(
+                    advert.title,
+                    advert.phone_number,
+                    advert.url,
+                )
+        except AdvertNotFoundError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+    return StreamingResponse(
+        create_csv(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=adverts.csv"},
     )

@@ -8,6 +8,12 @@ class AdvertRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def stream_all(self, batch_size: int = 1000):
+        stmt = select(Advert).execution_options(yield_per=batch_size)
+        result = await self.session.stream_scalars(stmt)
+        async for advert in result:
+            yield advert
+
     async def get_all(self) -> list[Advert]:
         result = await self.session.execute(select(Advert))
         return list(result.scalars().all())

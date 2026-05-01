@@ -1,4 +1,6 @@
 import httpx
+import csv
+import io
 
 from app.repositories.advert import AdvertRepository
 from app.scraper.search_page import SearchPageParser
@@ -86,9 +88,10 @@ class ParseService:
         for advert in adverts:
             await self.repo.delete_advert(advert)
 
-    def build_vcard(self, title: str, phone_number: str) -> str:
+    def build_vcard(self, title: str, phone_number: str, url: str) -> str:
         title = title.replace("\n", " ").strip()
         phone_number = phone_number.strip()
+        url = url.replace("\n", " ").strip()
 
         return (
             "BEGIN:VCARD\n"
@@ -96,5 +99,29 @@ class ParseService:
             f"N:;{title};;;\n"
             f"FN:{title}\n"
             f"TEL;TYPE=CELL:{phone_number}\n"
+            f"URL:{url}\n"
             "END:VCARD\n"
         )
+
+    def build_csv(self, title: str, phone_number: str, url: str) -> str:
+        title = title.replace("\n", " ").strip()
+        phone_number = phone_number.strip()
+        url = url.replace("\n", " ").strip()
+
+        buffer = io.StringIO()
+        writer = csv.writer(buffer, lineterminator="\n")
+        writer.writerow([title, phone_number, url])
+        return buffer.getvalue()
+
+    async def stream_all(self):
+        stream = self.repo.stream_all()
+        first = await anext(stream, None)
+        if first is None:
+            raise AdvertNotFoundError("No adverts found")
+
+        async def gen():
+            yield first
+            async for advert in stream:
+                yield advert
+
+        return gen()
