@@ -58,8 +58,16 @@ class ParseService:
             raise NoParsedAdverts("No adverts parsed")
 
         for advert in adverts:
+            auto_id = advert["auto_id"]
+            existing = (
+                await self.repo.get_by_auto_id(auto_id)
+                if auto_id
+                else await self.repo.get_by_url(advert["url"])
+            )
+            if existing:
+                continue
             await self.repo.create(
-                auto_id=advert["auto_id"],
+                auto_id=auto_id,
                 url=advert["url"],
                 title=advert["title"] or "",
                 phone_number=advert["phone_number"],

@@ -14,6 +14,32 @@ services:
                 condition: service_healthy
         environment:
             DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    beat:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: parser_beat
+        command: celery -A app.core.celery beat -l info
+        env_file:
+            - .env
+        depends_on:
+            rabbitmq:
+                condition: service_started
+            db:
+                condition: service_healthy
+    worker:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: parser_worker
+        command: celery -A app.core.celery worker -l info
+        env_file:
+            - .env
+        depends_on:
+            rabbitmq:
+                condition: service_started
+            db:
+                condition: service_healthy
     db:
         image: postgres:16.13-alpine
         container_name: parser_db

@@ -1,4 +1,5 @@
-from sqlalchemy import String
+from datetime import datetime
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -12,3 +13,19 @@ class Advert(Base):
     url: Mapped[str] = mapped_column(String(1024), unique=True)
     title: Mapped[str] = mapped_column(String(255), index=True)
     phone_number: Mapped[str] = mapped_column(String(20), index=True)
+
+
+class JobAdvert(Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(String(1024), unique=True)
+    max_pages: Mapped[int] = mapped_column(nullable=False)
+    interval_hours: Mapped[int] = mapped_column(nullable=False)
+    active: Mapped[bool] = mapped_column(default=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    next_run_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

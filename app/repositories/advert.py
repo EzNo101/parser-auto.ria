@@ -28,6 +28,10 @@ class AdvertRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_url(self, url: str) -> Advert | None:
+        result = await self.session.execute(select(Advert).where(Advert.url == url))
+        return result.scalar_one_or_none()
+
     async def get_by_phone_number(self, phone_number: str) -> Advert | None:
         result = await self.session.execute(
             select(Advert).where(Advert.phone_number == phone_number)
@@ -52,3 +56,4 @@ class AdvertRepository:
 
     async def delete_advert(self, advert: Advert) -> None:
         await self.session.delete(advert)
+        await self.session.commit()

@@ -8,3 +8,7 @@ class AdvertNotFoundError(AppError):
 
 class NoParsedAdverts(AppError):
     pass
+
+
+class JobNotFoundError(AppError):
+    pass
