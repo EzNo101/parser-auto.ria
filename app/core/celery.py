@@ -22,7 +22,7 @@ celery_app.conf.beat_schedule = {  # pyright: ignore[reportUnknownMemberType]
     },
 }
 
-celery_app.autodiscover_tasks(
+celery_app.autodiscover_tasks(  # pyright: ignore[reportUnknownMemberType]
     ["app.tasks"],
     related_name="parse",
-)  # pyright: ignore[reportUnknownMemberType]
+)
