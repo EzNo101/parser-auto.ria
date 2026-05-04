@@ -4,7 +4,6 @@ from app.core.config import settings
 celery_app = Celery(
     "parser",
     broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_BROKER_URL,
 )
 
 
@@ -23,4 +22,7 @@ celery_app.conf.beat_schedule = {  # pyright: ignore[reportUnknownMemberType]
     },
 }
 
-celery_app.autodiscover_tasks(["app.tasks"])  # pyright: ignore[reportUnknownMemberType]
+celery_app.autodiscover_tasks(
+    ["app.tasks"],
+    related_name="parse",
+)  # pyright: ignore[reportUnknownMemberType]
